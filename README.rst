@@ -1,3 +1,5 @@
+(A note on this fork: Tamarin uses timezone-aware DateTime objects which fail for my setup using MySQL. I've forked this to have a version of Tamarin which simply stores the dates/times as they are (UTC); when it comes to displaying the dates/times the timezone conversion will be done then instead.)
+
 Tamarin
 =======
 
