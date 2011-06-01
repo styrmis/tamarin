@@ -7,9 +7,7 @@ The primary user of this module is the `log_puller` module.
 """
 import logging
 import datetime
-from dateutil import zoneinfo
 from pyparsing import alphas, nums, alphanums, Combine, Word, Group, delimitedList, Suppress
-from django.conf import settings
 
 LOGGER = logging.getLogger(__name__)
 
@@ -56,26 +54,15 @@ class S3LogLineParser(object):
         :param int length: The length of the text to parse.
         :param list t: The grouped string to parse.
         :rtype: datetime.datetime
-        :returns: The datetime.datetime equivalent of the time string with
-            the correct (settings.TIME_ZONE) timezone set.
+        :returns: The datetime.datetime equivalent of the time string.
         """
         # Comes in as [['22/Apr/2011:18:28:10', '+000']] but we're just
         # interested in the time, since strptime with a %z formatter doesn't
         # work as expected on all platforms.
         dtime_str = t[0][0]
         # 22/Apr/2011:18:28:10
-        utc = datetime.datetime.strptime(dtime_str, "%d/%b/%Y:%H:%M:%S")
-        # The parsed time is in UTC. Make it "aware".
-        utc = utc.replace(tzinfo=zoneinfo.gettz('UTC'))
-        if settings.TIME_ZONE != 'UTC':
-            # Get the user's local timezone.
-            to_zone = zoneinfo.gettz(settings.TIME_ZONE)
-            # Set the timezone to the configured TZ.
-            return utc.astimezone(to_zone)
-        else:
-            # Already UTC, don't budge.
-            return utc
-
+        return datetime.datetime.strptime(dtime_str, "%d/%b/%Y:%H:%M:%S")
+        
     def parse(self):
         """
         Parses the class's :attr:`line_contents` attribute using pyparsing.
