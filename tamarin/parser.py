@@ -153,6 +153,10 @@ class S3LogLineParser(object):
             user_agent_or_dash('user_agent') +
             alpha_or_dash('version_id')
         )
+        # HACK: Some closing curly braces have found their way into the logs by virtue of some
+        # bad Django template code (I presume). Removing them for now until a better solution
+        # presents itself.
+        self.line_contents = self.line_contents.replace('}', '')
         return log_line_bnf.parseString(self.line_contents)
 
     def _parse_result_debug_msg(self, parsed):
