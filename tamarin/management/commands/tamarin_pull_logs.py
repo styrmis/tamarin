@@ -4,6 +4,7 @@ cron or another task scheduler if you don't have or want to use celery.
 """
 from django.core.management.base import BaseCommand
 from tamarin.log_puller import pull_and_parse_logs
+from tamarin.cf_log_puller import pull_and_parse_logs as pull_and_parse_cf_logs
 
 class Command(BaseCommand):
     """
@@ -16,3 +17,4 @@ class Command(BaseCommand):
         Call the log pulling function and do work silently.
         """
         pull_and_parse_logs()
+        pull_and_parse_cf_logs()
