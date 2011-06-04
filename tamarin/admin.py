@@ -2,7 +2,7 @@
 ModelAdmin classes for the tamarin package.
 """
 from django.contrib import admin
-from tamarin.models import S3LoggedBucket, S3LogRecord
+from tamarin.models import S3LoggedBucket, S3LogRecord, CloudFrontLoggedDistribution, CloudFrontLogRecord
 
 class S3LoggedBucketAdmin(admin.ModelAdmin):
     """
@@ -37,3 +37,6 @@ class S3LogRecordAdmin(admin.ModelAdmin):
         return obj.bucket.name
 
 admin.site.register(S3LogRecord, S3LogRecordAdmin)
+
+admin.site.register(CloudFrontLoggedDistribution)
+admin.site.register(CloudFrontLogRecord)
