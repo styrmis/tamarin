@@ -136,3 +136,93 @@ class S3LogRecord(models.Model):
                 setattr(self, field, None)
 
         super(S3LogRecord, self).save()
+
+class CloudFrontLoggedDistributionManager(models.Manager):
+    """
+    Table-level operations for CloudFrontLoggedDistribution model.
+    """
+    def get_log_buckets_to_monitor(self):
+        """
+        Returns which CloudFrontLoggedDistribution objects the log puller should monitor
+        for log keys.
+        
+        :rtype: QuerySet
+        :returns: The CloudFrontLoggedDistribution objects that should be monitored for
+            log keys.
+        """
+        return self.filter(monitor_distribution=True)
+
+class CloudFrontLoggedDistribution(models.Model):
+    """
+    A distribution that is logged.
+    """
+    name = models.CharField(max_length=255, unique=True, db_index=True,
+        help_text="The name of the distribution that is being logged. This is "\
+                  "where the media that is being served resides.")
+    log_bucket_name = models.CharField(max_length=255,
+        help_text="The S3 bucket to monitor for log keys. This must be a "\
+                  "separate bucket from the logged bucket. The contents of "\
+                  "this bucket must only be log files.")
+    monitor_distribution = models.BooleanField(default=True,
+        help_text="When checked, pull logs from this distribution's log bucket.")
+
+    # Custom manager.
+    objects = CloudFrontLoggedDistributionManager()
+
+    def __unicode__(self):
+        return "CloudFrontLoggedDistribution: %s" % self.name
+
+class CloudFrontLogRecord(models.Model):
+    """
+    A single log entry for a CloudFront distribution.
+    """
+    distribution = models.ForeignKey(CloudFrontLoggedDistribution,
+        help_text="The distribution that the request was processed against.")
+    request_dtime = models.DateTimeField()
+    edge_location = models.CharField(max_length=255)
+    bytes_sent = models.PositiveIntegerField(blank=True, null=True,
+        help_text="The number of response bytes sent, excluding HTTP "\
+                  "protocol overhead, or '-' if zero.")
+    remote_ip = models.IPAddressField(
+        help_text="The apparent Internet address of the requester. "\
+                  "Intermediate proxies and firewalls might obscure the "\
+                  "actual address of the machine making the request.")
+    http_method = models.CharField(max_length=10)
+    cs_host = models.CharField(max_length=255,
+        help_text="DNS name (the CloudFront distribution name specified in "\
+                  "the request). If you made the request to a CNAME, the DNS "\
+                  "name field will contain the underlying distribution DNS name, "\
+                  "not the CNAME.")
+    cs_uri_stem = models.CharField(max_length=2048, help_text="URI stem (e.g., /images/daily-ad.jpg).")
+    http_status = models.PositiveIntegerField(
+        help_text="The HTTP response code for the request.")
+    referrer = models.TextField(blank=True, null=True,
+        help_text="The value of the HTTP Referrer header, if present. "\
+                  "HTTP user-agents (e.g. browsers) typically set this "\
+                  "header to the URL of the linking or embedding page when "\
+                  "making a request.")
+    user_agent = models.TextField(blank=True, null=True,
+        help_text="The value of the HTTP User-Agent header.")
+    query_string = models.CharField(max_length=2048, blank=True, null=True,
+        help_text="The query string portion of the URI that is included on the connect string.")
+    
+    # The following fields (by string name) have dash values replaced with
+    # None values so we don't have to query by '-'.
+    DASHED_TO_NONE_FIELDS = [
+        'query_string'
+    ]
+
+    def __unicode__(self):
+        return "CloudFrontLogRecord: %s" % self.id
+
+    def save(self):
+        """
+        Look through the dash-to-empty fields, replace dashes with a 
+        None value to promote less silly query filters.
+        """
+        for field in self.DASHED_TO_NONE_FIELDS:
+            field_val = getattr(self, field)
+            if field_val == '-' or field_val == '':
+                setattr(self, field, None)
+
+        super(CloudFrontLogRecord, self).save()
