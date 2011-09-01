@@ -103,7 +103,7 @@ class S3LogLineParser(object):
         # IE: SOAP.CreateBucket or REST.PUT.OBJECT
         operation = Word(alphas + "._")
         # S3 key: /photos/2006/08/puppy.jpg
-        key = Word(alphanums + "/-_.?=%&:+<>#~[]{}()+!")
+        key = Word(alphanums + "/-_.,?=%&:+<>#~[]{}()+!")
         # One of GET, POST, or PUT
         http_method = Word(alphas)
         # HTTP/1.1
