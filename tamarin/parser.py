@@ -7,7 +7,7 @@ The primary user of this module is the `log_puller` module.
 """
 import logging
 import datetime
-from pyparsing import alphas, nums, alphanums, Combine, Word, Group, delimitedList, Suppress
+from pyparsing import alphas, nums, alphanums, Combine, Word, Group, delimitedList, Suppress, ParseException
 
 LOGGER = logging.getLogger(__name__)
 
@@ -103,7 +103,7 @@ class S3LogLineParser(object):
         # IE: SOAP.CreateBucket or REST.PUT.OBJECT
         operation = Word(alphas + "._")
         # S3 key: /photos/2006/08/puppy.jpg
-        key = Word(alphanums + "/-_.?=%&:+<>#~[]{}+!")
+        key = Word(alphanums + "/-_.?=%&:+<>#~[]{}()+!")
         # One of GET, POST, or PUT
         http_method = Word(alphas)
         # HTTP/1.1
@@ -153,7 +153,15 @@ class S3LogLineParser(object):
             user_agent_or_dash('user_agent') +
             alpha_or_dash('version_id')
         )
-        return log_line_bnf.parseString(self.line_contents)
+        
+        try:
+            parsed = log_line_bnf.parseString(self.line_contents)
+        except ParseException as ex:
+            print self.line_contents[ex.loc-1:ex.loc+1]
+            print self.line_contents[ex.loc-30:ex.loc+30]
+            raise
+        
+        return parsed
 
     def _parse_result_debug_msg(self, parsed):
         """
